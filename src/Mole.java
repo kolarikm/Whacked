@@ -1,12 +1,22 @@
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Created by Andromeda on 4/1/17.
+ * Created by Michael on 4/1/17.
  */
+
 public class Mole {
 
+    public int id;
     public Random r = new Random();
+    public ReentrantLock lock;
+
+    public Mole(int id, ReentrantLock lock) {
+        this.id = id;
+        this.lock = lock;
+        go();
+    }
 
     public void go() {
         Runnable moleTask = () -> {
@@ -20,10 +30,10 @@ public class Mole {
 
     public boolean work() {
         try {
-            System.out.println(Thread.currentThread().getName() + " is working");
+            //System.out.println("Thread: " + this.id + " is working. My lock is: " + lock.toString());
             int time = r.nextInt((10 - 1)+1);
             TimeUnit.SECONDS.sleep(time+1);
-            System.out.println(Thread.currentThread().getName() + " is done after " + (time+1) + " seconds");
+            //System.out.println("Thread: " + this.id + " is done after " + (time+1) + " seconds.");
         } catch (Exception e) {
             e.printStackTrace();
         }
