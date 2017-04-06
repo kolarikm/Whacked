@@ -1,20 +1,50 @@
+/*******************************************************
+ * Whack a Mole: A Java Concurrency Project
+ * Created by: Michael Kolarik
+ * Greg Wolffe - CIS 452 - Winter 2017
+ *
+ * A simulation of the classic Whack a Mole arcade game
+ * used to demonstrate the principles of concurrency
+ * through the utilization threading
+ ******************************************************/
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
+/**
+ * The game logic class for a Whack a mole implementation focusing on
+ * concurrency between a user defined number of moles(threads). Gets
+ * instantiated within the UI class
+ */
 public class Whacked {
 
+    //Is the game currently active
     static boolean playing;
-    int dim;
-    static Semaphore sem;
-    static volatile int[][] holes;
 
+    //User defined size of the board
+    int dim;
+
+    //Semaphore used to lock threads from working
+    static Semaphore sem;
+
+    //Logical representation of the board
+    static int[][] holes;
+
+    /**
+     * Instantiates a new game of Whack a mole.
+     * @param arg the size of the board determined by a UI dialog
+     */
     public Whacked(int arg) {
         this.dim = arg;
         this.playing = false;
         startGame();
     }
 
+    /**
+     * Assigns proper values to all fields and generates the correct number of
+     * mole threads as defined by the player
+     */
     public void startGame() {
         try {
             sem = new Semaphore(dim);
@@ -23,43 +53,44 @@ public class Whacked {
             e.printStackTrace();
         }
 
-        int id = 0;
+        //Generates dim*dim number of mole threads
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                new Mole(i, j, id++);
-                //System.out.println(String.format("Mole @ %1$d, %2$d", i, j));
+                new Mole(i, j);
             }
         }
         this.playing = true;
     }
 
-    public void checkMole(int x, int y) {
-        System.out.println("Checking mole @: " + x + " " + y);
-        if (holes[x][y] == 1) {
-            System.out.println("Got that mole");
-        } else {
-            System.out.println("Missed");
-        }
-    }
-
+    /**
+     * Mole thread class responsible for representing a mole in the
+     * whack a mole game board. One thread is created for each mole
+     * in the program.
+     */
     static class Mole extends Thread {
 
-        int i, j, moleId;
+        //Indices representing the moles place in the board
+        int i, j;
+
+        //Random number generator used for determining sleep times
         Random rand = new Random();
 
-        Mole(int i, int j, int moleId) {
+        /**
+         * Creates a new mole with specific indices and calls the run method
+         * @param i the row index of the mole
+         * @param j the column index of the mole
+         */
+        Mole(int i, int j) {
             this.i = i;
             this.j = j;
-            this.moleId = moleId;
             start();
         }
 
-        public int getMoleId() {
-            return this.moleId;
-        }
-
+        /**
+         * Runs the actual work for the mole thread
+         * Continuously moves up and down, waiting for a turn each time
+         */
         public void run ()  {
-            System.out.println(this.getMoleId());
             while (playing) {
                 try {
                     //Initially sleep for a random time before requesting semaphore for the first time
@@ -82,7 +113,6 @@ public class Whacked {
                             synchronized (holes) {
                                 holes[this.i][this.j] = 0;
                             }
-
                             //Sleep before requesting semaphore once again
                             TimeUnit.MILLISECONDS.sleep(rand.nextInt(2000));
                         }
@@ -94,19 +124,10 @@ public class Whacked {
         }
     }
 
-    private static void print() {
-        synchronized (holes) {
-            System.out.print("\033[H\033[2J");
-            System.out.flush();
-            for (int i = 0; i < holes.length; i++) {
-                for (int j = 0; j < holes[i].length; j++) {
-                    System.out.print("" + holes[i][j] + " ");
-                }
-                System.out.println();
-            }
-        }
-    }
-
+    /**
+     * Returns the current state of the board based on which threads are up
+     * @return the state of the board
+     */
     public int[][] getBoard() {
         return this.holes;
     }
