@@ -31,6 +31,8 @@ public class Whacked {
     //Logical representation of the board
     static int[][] holes;
 
+    static Mole[][] moleThreads;
+
     /**
      * Instantiates a new game of Whack a mole.
      * @param arg the size of the board determined by a UI dialog
@@ -49,6 +51,8 @@ public class Whacked {
         try {
             sem = new Semaphore(dim);
             holes = new int[dim][dim];
+            moleThreads = new Mole[dim][dim];
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -56,10 +60,25 @@ public class Whacked {
         //Generates dim*dim number of mole threads
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-                new Mole(i, j);
+                Mole mole = new Mole(i, j);
+                synchronized (moleThreads) {
+                    moleThreads[i][j] = mole;
+                }
+                mole.start();
             }
         }
         this.playing = true;
+    }
+
+    public boolean checkMoleThread(int i, int j) {
+        synchronized (moleThreads) {
+            if (moleThreads[i][j].isAlive()) {
+                moleThreads[i][j].interrupt();
+                holes[i][j] = 0;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -83,7 +102,6 @@ public class Whacked {
         Mole(int i, int j) {
             this.i = i;
             this.j = j;
-            start();
         }
 
         /**
@@ -117,8 +135,17 @@ public class Whacked {
                             TimeUnit.MILLISECONDS.sleep(rand.nextInt(2000));
                         }
                     }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException ie) {
+                    sem.release();
+                    synchronized (holes) {
+                        holes[this.i][this.j] = 0;
+                    }
+                    try {
+                        //Sleep before requesting semaphore once again
+                        TimeUnit.MILLISECONDS.sleep(2000);
+                    } catch (Exception e) {
+
+                    }
                 }
             }
         }

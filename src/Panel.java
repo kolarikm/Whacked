@@ -42,6 +42,8 @@ public class Panel extends JFrame implements ActionListener {
     //Array of buttons representing a mole thread
     public static MoleButton[][] moles;
 
+    public static Whacked game;
+
     /**
      * Creates the game panel
      * Sets the layout and window configuration before generating
@@ -183,7 +185,7 @@ public class Panel extends JFrame implements ActionListener {
         gt.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gt.pack();
         gt.setVisible(true);
-        Whacked game = new Whacked(dim);
+        game = new Whacked(dim);
         game.startGame();
         try {
             whack(game);
@@ -200,9 +202,11 @@ public class Panel extends JFrame implements ActionListener {
      */
     public void actionPerformed(ActionEvent e) {
         MoleButton mb = (MoleButton)e.getSource();
-        if (mb.check()) {
-            mb.setText("");
-            score++;
+        if (game.checkMoleThread(mb.x, mb.y)) {
+            if (mb.check()) {
+                mb.down();
+                score++;
+            }
         }
     }
 }
